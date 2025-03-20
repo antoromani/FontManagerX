@@ -65,32 +65,6 @@
                     </li>
                 </ul>
             </nav>
-            
-            <!-- Folders container -->
-            <div id="folders-container" class="submenu-container hidden">
-                <div class="submenu-header">
-                    <h3>Local Folders</h3>
-                    <button id="add-folder-btn" class="action-btn">
-                        <svg class="feather-icon">
-                            <use href="assets/feather-icons.svg#plus"/>
-                        </svg>
-                    </button>
-                </div>
-                <ul id="folder-list" class="submenu-list"></ul>
-            </div>
-            
-            <!-- Collections container -->
-            <div id="collections-container" class="submenu-container hidden">
-                <div class="submenu-header">
-                    <h3>Collections</h3>
-                    <button id="create-collection-btn" class="action-btn">
-                        <svg class="feather-icon">
-                            <use href="assets/feather-icons.svg#plus"/>
-                        </svg>
-                    </button>
-                </div>
-                <ul id="collections-list" class="submenu-list"></ul>
-            </div>
         </aside>
         
         <!-- Main content area -->
@@ -108,29 +82,61 @@
                 </div>
             </div>
             
-            <!-- Font list container -->
-            <div id="font-list-container">
-                <div class="font-list-header">
-                    <h2>System Fonts</h2>
-                    <span id="font-count">0 fonts</span>
+            <!-- Main layout container for content and sidebar -->
+            <div class="content-layout">
+                <!-- Font list container -->
+                <div id="font-list-container">
+                    <div class="font-list-header">
+                        <h2>System Fonts</h2>
+                        <span id="font-count">0 fonts</span>
+                    </div>
+                    
+                    <!-- Loading indicator -->
+                    <div id="loading-indicator" class="hidden">
+                        <div class="spinner"></div>
+                        <p>Loading fonts...</p>
+                    </div>
+                    
+                    <!-- Empty state -->
+                    <div id="empty-state" class="hidden">
+                        <svg class="feather-icon large">
+                            <use href="assets/feather-icons.svg#alert-circle"/>
+                        </svg>
+                        <p>No fonts found</p>
+                    </div>
+                    
+                    <!-- Font list -->
+                    <div id="font-list"></div>
                 </div>
                 
-                <!-- Loading indicator -->
-                <div id="loading-indicator" class="hidden">
-                    <div class="spinner"></div>
-                    <p>Loading fonts...</p>
+                <!-- Side panel for folders and collections -->
+                <div class="side-panel">
+                    <!-- Folders container -->
+                    <div id="folders-container" class="submenu-container hidden">
+                        <div class="submenu-header">
+                            <h3>Local Folders</h3>
+                            <button id="add-folder-btn" class="action-btn">
+                                <svg class="feather-icon">
+                                    <use href="assets/feather-icons.svg#plus"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <ul id="folder-list" class="submenu-list"></ul>
+                    </div>
+                    
+                    <!-- Collections container -->
+                    <div id="collections-container" class="submenu-container hidden">
+                        <div class="submenu-header">
+                            <h3>Collections</h3>
+                            <button id="create-collection-btn" class="action-btn">
+                                <svg class="feather-icon">
+                                    <use href="assets/feather-icons.svg#plus"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <ul id="collections-list" class="submenu-list"></ul>
+                    </div>
                 </div>
-                
-                <!-- Empty state -->
-                <div id="empty-state" class="hidden">
-                    <svg class="feather-icon large">
-                        <use href="assets/feather-icons.svg#alert-circle"/>
-                    </svg>
-                    <p>No fonts found</p>
-                </div>
-                
-                <!-- Font list -->
-                <div id="font-list"></div>
             </div>
         </main>
     </div>
@@ -175,9 +181,6 @@
                 </button>
                 <button class="action-btn toggle-favorite-btn" title="Add to Favorites">
                     <svg class="feather-icon">
-                        <use href="assets/feather-icons.svg#plus"/>
-                    </svg>
-                    <svg class="feather-icon favorite-icon hidden">
                         <use href="assets/feather-icons.svg#heart"/>
                     </svg>
                 </button>
@@ -188,7 +191,7 @@
                 </button>
                 <button class="action-btn add-to-collection-btn" title="Add to Collection">
                     <svg class="feather-icon">
-                        <use href="assets/feather-icons.svg#plus"/>
+                        <use href="assets/feather-icons.svg#grid"/>
                     </svg>
                 </button>
             </div>

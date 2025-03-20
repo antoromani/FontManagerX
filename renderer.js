@@ -231,18 +231,43 @@ function switchCategory(category) {
 async function loadSystemFonts() {
   showLoading();
   try {
-    if (systemFontsList.length === 0) {
-      const response = await fetch('/api/fonts/system');
-      if (!response.ok) {
-        throw new Error(`Failed to load system fonts: ${response.statusText}`);
-      }
-      systemFontsList = await response.json();
+    // Siempre intentamos obtener las fuentes del sistema frescas
+    const response = await fetch('/api/fonts/system');
+    if (!response.ok) {
+      throw new Error(`Failed to load system fonts: ${response.statusText}`);
     }
+    const fonts = await response.json();
     
-    fontsList = systemFontsList;
-    renderFontList();
+    // Si obtenemos fuentes, las guardamos en nuestra lista
+    if (fonts && Array.isArray(fonts) && fonts.length > 0) {
+      systemFontsList = fonts;
+      fontsList = systemFontsList;
+      console.log('System fonts loaded successfully:', fonts.length);
+      hideLoading();
+      renderFontList();
+    } else {
+      console.warn('No system fonts were found, showing sample fonts');
+      throw new Error('No fonts returned from API');
+    }
   } catch (error) {
     console.error('Error loading system fonts:', error);
+    // Intentamos una vez más
+    try {
+      const fallbackResponse = await fetch('/api/fonts/system');
+      const fallbackFonts = await fallbackResponse.json();
+      if (fallbackFonts && Array.isArray(fallbackFonts) && fallbackFonts.length > 0) {
+        systemFontsList = fallbackFonts;
+        fontsList = systemFontsList;
+        console.log('System fonts loaded successfully on retry:', fallbackFonts.length);
+        hideLoading();
+        renderFontList();
+        return;
+      }
+    } catch (fallbackError) {
+      console.error('Error on fallback load:', fallbackError);
+    }
+    
+    hideLoading();
     showEmptyState();
   }
 }
