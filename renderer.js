@@ -6,7 +6,7 @@ let fontsList = [];
 let systemFontsList = [];
 let localFoldersList = [];
 let googleFontsList = [];
-let collectionsList = [];
+let collectionsArray = [];
 let favoritesList = [];
 let activeFontsList = [];
 let searchQuery = '';
@@ -22,7 +22,7 @@ const menuItems = document.querySelectorAll('.menu-item');
 const foldersContainer = document.getElementById('folders-container');
 const collectionsContainer = document.getElementById('collections-container');
 const folderList = document.getElementById('folder-list');
-const collectionsList = document.getElementById('collections-list');
+const collectionsListEl = document.getElementById('collections-list');
 const fontListContainer = document.getElementById('font-list-container');
 const fontList = document.getElementById('font-list');
 const fontCount = document.getElementById('font-count');
@@ -110,8 +110,18 @@ function setupEventListeners() {
   
   // Add folder
   addFolderBtn.addEventListener('click', async () => {
-    const folderPath = await window.api.openFolderDialog();
+    // For web version, we'll just use a prompt to enter a folder path
+    const folderPath = prompt('Enter the path to a folder containing fonts:', '/path/to/fonts');
     if (folderPath) {
+      // Add folder to list
+      const userDataDir = sessionStorage.getItem('userDataDir') || '';
+      const foldersList = JSON.parse(localStorage.getItem('localFolders') || '[]');
+      
+      if (!foldersList.includes(folderPath)) {
+        foldersList.push(folderPath);
+        localStorage.setItem('localFolders', JSON.stringify(foldersList));
+      }
+      
       await loadLocalFolders();
       loadFontsByFolder(folderPath);
     }
@@ -125,10 +135,29 @@ function setupEventListeners() {
   saveCollectionBtn.addEventListener('click', async () => {
     const name = collectionNameInput.value.trim();
     if (name) {
-      await window.api.createCollection(name);
-      await loadCollections();
-      createCollectionModal.classList.add('hidden');
-      collectionNameInput.value = '';
+      // Create a new collection
+      try {
+        const response = await fetch('/api/collections', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name })
+        });
+        
+        if (response.ok) {
+          await loadCollections();
+          createCollectionModal.classList.add('hidden');
+          collectionNameInput.value = '';
+        } else {
+          const error = await response.json();
+          console.error('Error creating collection:', error);
+          alert(`Failed to create collection: ${error.error}`);
+        }
+      } catch (error) {
+        console.error('Error creating collection:', error);
+        alert(`Failed to create collection: ${error.message}`);
+      }
     }
   });
   
@@ -157,6 +186,10 @@ function switchCategory(category) {
   // Hide/show containers
   foldersContainer.classList.add('hidden');
   collectionsContainer.classList.add('hidden');
+  
+  // Set title in font list header
+  const fontListHeader = fontListContainer.querySelector('.font-list-header h2');
+  fontListHeader.textContent = menuItems.find(item => item.dataset.category === category).querySelector('span').textContent;
   
   // Handle specific category actions
   currentCategory = category;
@@ -189,7 +222,14 @@ function switchCategory(category) {
 async function loadSystemFonts() {
   showLoading();
   try {
-    systemFontsList = await window.api.getSystemFonts();
+    if (systemFontsList.length === 0) {
+      const response = await fetch('/api/fonts/system');
+      if (!response.ok) {
+        throw new Error(`Failed to load system fonts: ${response.statusText}`);
+      }
+      systemFontsList = await response.json();
+    }
+    
     fontsList = systemFontsList;
     renderFontList();
   } catch (error) {
@@ -201,7 +241,8 @@ async function loadSystemFonts() {
 async function loadLocalFolders() {
   showLoading();
   try {
-    localFoldersList = await window.api.getLocalFolders();
+    // Get folders from localStorage for the web version
+    localFoldersList = JSON.parse(localStorage.getItem('localFolders') || '[]');
     renderFolderList();
     
     // If no folders, show empty state
@@ -232,7 +273,15 @@ async function loadFontsByFolder(folderPath) {
       }
     });
     
-    const localFonts = await window.api.loadLocalFonts(folderPath);
+    // Encode the folder path for the URL
+    const encodedPath = encodeURIComponent(folderPath);
+    const response = await fetch(`/api/fonts/local/${encodedPath}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load local fonts: ${response.statusText}`);
+    }
+    
+    const localFonts = await response.json();
     fontsList = localFonts;
     renderFontList();
   } catch (error) {
@@ -245,8 +294,15 @@ async function loadGoogleFonts() {
   showLoading();
   try {
     if (googleFontsList.length === 0) {
-      googleFontsList = await window.api.getGoogleFonts();
+      const response = await fetch('/api/fonts/google');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load Google fonts: ${response.statusText}`);
+      }
+      
+      googleFontsList = await response.json();
     }
+    
     fontsList = googleFontsList;
     renderFontList();
   } catch (error) {
@@ -258,10 +314,16 @@ async function loadGoogleFonts() {
 async function loadCollections() {
   showLoading();
   try {
-    collectionsList = await window.api.getCollections();
+    const response = await fetch('/api/collections');
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load collections: ${response.statusText}`);
+    }
+    
+    collectionsArray = await response.json();
     renderCollectionsList();
     
-    if (collectionsList.length === 0) {
+    if (collectionsArray.length === 0) {
       showEmptyState();
     } else if (currentCollection) {
       // If a collection was selected, load its fonts
@@ -279,7 +341,7 @@ async function loadCollectionFonts(collectionName) {
     currentCollection = collectionName;
     
     // Highlight the selected collection
-    const collectionItems = collectionsList.querySelectorAll('li');
+    const collectionItems = collectionsListEl.querySelectorAll('li');
     collectionItems.forEach(item => {
       if (item.dataset.name === collectionName) {
         item.classList.add('active');
@@ -289,7 +351,7 @@ async function loadCollectionFonts(collectionName) {
     });
     
     // Find the collection in the list
-    const collection = collectionsList.find(c => c.name === collectionName);
+    const collection = collectionsArray.find(c => c.name === collectionName);
     if (collection) {
       fontsList = collection.fonts;
       renderFontList();
@@ -305,7 +367,13 @@ async function loadCollectionFonts(collectionName) {
 async function loadActiveFonts() {
   showLoading();
   try {
-    activeFontsList = await window.api.getActiveFonts();
+    const response = await fetch('/api/fonts/active');
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load active fonts: ${response.statusText}`);
+    }
+    
+    activeFontsList = await response.json();
     fontsList = activeFontsList;
     renderFontList();
   } catch (error) {
@@ -317,12 +385,40 @@ async function loadActiveFonts() {
 async function loadFavorites() {
   showLoading();
   try {
-    favoritesList = await window.api.getFavorites();
+    const response = await fetch('/api/favorites');
+    
+    if (!response.ok) {
+      throw new Error(`Failed to load favorites: ${response.statusText}`);
+    }
+    
+    favoritesList = await response.json();
     fontsList = favoritesList;
     renderFontList();
   } catch (error) {
     console.error('Error loading favorites:', error);
     showEmptyState();
+  }
+}
+
+// Load Google font styles for a specific font family
+async function loadGoogleFontStyle(family, variants = ['regular']) {
+  // Only load if not already loaded
+  if (!loadedFontFamilies.has(family)) {
+    // Construct the Google Fonts URL
+    const sanitizedFamily = family.replace(/ /g, '+');
+    const variantsStr = variants.join(',');
+    const fontUrl = `https://fonts.googleapis.com/css2?family=${sanitizedFamily}:wght@${variantsStr}&display=swap`;
+    
+    // Create link element
+    const linkEl = document.createElement('link');
+    linkEl.rel = 'stylesheet';
+    linkEl.href = fontUrl;
+    
+    // Add to document
+    document.head.appendChild(linkEl);
+    
+    // Mark as loaded
+    loadedFontFamilies.add(family);
   }
 }
 
@@ -353,9 +449,9 @@ function renderFolderList() {
 }
 
 function renderCollectionsList() {
-  collectionsContainer.querySelector('ul').innerHTML = '';
+  collectionsListEl.innerHTML = '';
   
-  collectionsList.forEach(collection => {
+  collectionsArray.forEach(collection => {
     const li = document.createElement('li');
     li.dataset.name = collection.name;
     
@@ -370,7 +466,7 @@ function renderCollectionsList() {
       loadCollectionFonts(collection.name);
     });
     
-    collectionsContainer.querySelector('ul').appendChild(li);
+    collectionsListEl.appendChild(li);
   });
 }
 
@@ -416,6 +512,11 @@ function renderFontList() {
     fonts.forEach(font => {
       const fontItem = createFontItem(font);
       familyGroup.appendChild(fontItem);
+      
+      // If it's a Google font, load the font style
+      if (font.type === 'google') {
+        loadGoogleFontStyle(font.family, [font.style || 'regular']);
+      }
     });
     
     fontList.appendChild(familyGroup);
@@ -489,60 +590,127 @@ function createFontItem(font) {
     const isActive = toggleActivateBtn.classList.contains('active');
     
     try {
+      let response;
+      
       if (isActive) {
-        await window.api.deactivateFont(font.path);
-        toggleActivateBtn.classList.remove('active');
-        toggleActivateBtn.querySelector('use').setAttribute('href', 'assets/feather-icons.svg#toggle-left');
+        // Deactivate font
+        response = await fetch('/api/fonts/deactivate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fontPath: font.path })
+        });
       } else {
-        await window.api.activateFont(font.path);
-        toggleActivateBtn.classList.add('active');
-        toggleActivateBtn.querySelector('use').setAttribute('href', 'assets/feather-icons.svg#toggle-right');
+        // Activate font
+        response = await fetch('/api/fonts/activate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fontPath: font.path })
+        });
       }
       
-      // Refresh active fonts list if we're in that category
-      if (currentCategory === 'active') {
-        await loadActiveFonts();
+      if (response.ok) {
+        if (isActive) {
+          toggleActivateBtn.classList.remove('active');
+          toggleActivateBtn.querySelector('use').setAttribute('href', 'assets/feather-icons.svg#toggle-left');
+        } else {
+          toggleActivateBtn.classList.add('active');
+          toggleActivateBtn.querySelector('use').setAttribute('href', 'assets/feather-icons.svg#toggle-right');
+        }
+        
+        // Refresh active fonts list if we're in that category
+        if (currentCategory === 'active') {
+          await loadActiveFonts();
+        }
+      } else {
+        const error = await response.json();
+        console.error('Error toggling font activation:', error);
+        alert(`Failed to ${isActive ? 'deactivate' : 'activate'} font: ${error.error}`);
       }
     } catch (error) {
       console.error('Error toggling font activation:', error);
+      alert(`Failed to ${isActive ? 'deactivate' : 'activate'} font: ${error.message}`);
     }
   });
   
   toggleFavoriteBtn.addEventListener('click', async () => {
     try {
-      await window.api.toggleFavorite(font);
-      toggleFavoriteBtn.classList.toggle('active');
+      const response = await fetch('/api/favorites/toggle', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ fontData: font })
+      });
       
-      // Refresh favorites list if we're in that category
-      if (currentCategory === 'favorites') {
-        await loadFavorites();
+      if (response.ok) {
+        const updatedFont = await response.json();
+        toggleFavoriteBtn.classList.toggle('active');
+        
+        // Refresh favorites list if we're in that category
+        if (currentCategory === 'favorites') {
+          await loadFavorites();
+        }
+      } else {
+        const error = await response.json();
+        console.error('Error toggling favorite:', error);
+        alert(`Failed to toggle favorite: ${error.error}`);
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
+      alert(`Failed to toggle favorite: ${error.message}`);
     }
   });
   
-  openLocationBtn.addEventListener('click', async () => {
+  openLocationBtn.addEventListener('click', () => {
+    // In web version, just show the path
     if (font.path) {
-      await window.api.openFontLocation(font.path);
+      alert(`Font location: ${font.path}`);
     }
   });
   
   addToCollectionBtn.addEventListener('click', async () => {
-    // Create a collection picker modal (simplified for now)
-    const collections = await window.api.getCollections();
-    
-    if (collections.length === 0) {
-      alert('Please create a collection first.');
-      return;
-    }
-    
-    // Simple collection selection (real implementation would have a proper modal)
-    const collectionName = prompt('Select a collection to add this font to:', collections[0].name);
-    
-    if (collectionName && collections.some(c => c.name === collectionName)) {
-      await window.api.addToCollection(collectionName, font);
-      alert(`Added ${font.family} to ${collectionName}`);
+    try {
+      // Get collections
+      const response = await fetch('/api/collections');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load collections: ${response.statusText}`);
+      }
+      
+      const collections = await response.json();
+      
+      if (collections.length === 0) {
+        alert('Please create a collection first.');
+        return;
+      }
+      
+      // Simple collection selection (real implementation would have a proper modal)
+      const collectionName = prompt('Select a collection to add this font to:', collections[0].name);
+      
+      if (collectionName && collections.some(c => c.name === collectionName)) {
+        const addResponse = await fetch(`/api/collections/${encodeURIComponent(collectionName)}/fonts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ fontData: font })
+        });
+        
+        if (addResponse.ok) {
+          alert(`Added ${font.family} to ${collectionName}`);
+        } else {
+          const error = await addResponse.json();
+          console.error('Error adding font to collection:', error);
+          alert(`Failed to add font to collection: ${error.error}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error adding font to collection:', error);
+      alert(`Failed to add font to collection: ${error.message}`);
     }
   });
   
@@ -554,45 +722,27 @@ function createFontItem(font) {
 
 function updateAllFontSamples() {
   const fontSamples = document.querySelectorAll('.font-sample');
+  
   fontSamples.forEach(sample => {
     sample.textContent = sampleText;
     sample.style.fontSize = `${fontSize}px`;
   });
 }
 
-// Loading state management
 function showLoading() {
   loadingIndicator.classList.remove('hidden');
-  fontList.classList.add('hidden');
   emptyState.classList.add('hidden');
 }
 
 function hideLoading() {
   loadingIndicator.classList.add('hidden');
-  fontList.classList.remove('hidden');
 }
 
 function showEmptyState() {
   emptyState.classList.remove('hidden');
-  fontList.classList.add('hidden');
   loadingIndicator.classList.add('hidden');
 }
 
 function hideEmptyState() {
   emptyState.classList.add('hidden');
-}
-
-// Load fonts from Google Fonts API
-async function loadGoogleFontStyle(family, variants = ['regular']) {
-  if (loadedFontFamilies.has(family)) return;
-  
-  try {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = `https://fonts.googleapis.com/css2?family=${family.replace(/\s+/g, '+')}:${variants.join(',')}`;
-    document.head.appendChild(link);
-    loadedFontFamilies.add(family);
-  } catch (error) {
-    console.error(`Error loading Google Font ${family}:`, error);
-  }
 }

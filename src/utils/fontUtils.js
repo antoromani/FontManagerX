@@ -1,27 +1,27 @@
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-
 /**
- * Utility functions for font operations
+ * Font utility functions
+ * Provides common utility functions for font operations
  */
+
+const os = require('os');
+const path = require('path');
 
 /**
  * Get user fonts directory based on platform
  * @returns {string} - Path to user fonts directory
  */
 function getUserFontsDirectory() {
-  const platform = os.platform();
+  const platform = process.platform;
   
   switch (platform) {
     case 'win32':
-      return path.join(process.env.WINDIR, 'Fonts');
+      return path.join(process.env.WINDIR || 'C:\\Windows', 'Fonts');
     case 'darwin':
       return path.join(os.homedir(), 'Library/Fonts');
     case 'linux':
       return path.join(os.homedir(), '.local/share/fonts');
     default:
-      throw new Error(`Unsupported platform: ${platform}`);
+      return path.join(os.homedir(), 'fonts');
   }
 }
 
@@ -31,9 +31,11 @@ function getUserFontsDirectory() {
  * @returns {string} - Font name
  */
 function extractFontNameFromPath(fontPath) {
-  const basename = path.basename(fontPath);
-  const fontName = basename.replace(/\.(ttf|otf|woff|woff2)$/i, '');
-  return fontName;
+  const fileName = path.basename(fontPath);
+  const fontNameMatch = fileName.match(/^(.+)\.(ttf|otf|woff|woff2)$/i);
+  const fontName = fontNameMatch ? fontNameMatch[1] : fileName;
+  
+  return fontName.replace(/[_-]/g, ' ');
 }
 
 /**
@@ -42,15 +44,8 @@ function extractFontNameFromPath(fontPath) {
  * @returns {boolean} - True if valid
  */
 function isValidFontFile(fontPath) {
-  try {
-    const stats = fs.statSync(fontPath);
-    if (!stats.isFile()) return false;
-    
-    const ext = path.extname(fontPath).toLowerCase();
-    return ext === '.ttf' || ext === '.otf' || ext === '.woff' || ext === '.woff2';
-  } catch (error) {
-    return false;
-  }
+  const ext = path.extname(fontPath).toLowerCase();
+  return ['.ttf', '.otf', '.woff', '.woff2'].includes(ext);
 }
 
 /**
@@ -59,16 +54,16 @@ function isValidFontFile(fontPath) {
  * @returns {Object} - Object with family names as keys and arrays of fonts as values
  */
 function groupFontsByFamily(fonts) {
-  return fonts.reduce((acc, font) => {
-    const family = font.family || 'Unknown';
-    
-    if (!acc[family]) {
-      acc[family] = [];
+  const fontsByFamily = {};
+  
+  fonts.forEach(font => {
+    if (!fontsByFamily[font.family]) {
+      fontsByFamily[font.family] = [];
     }
-    
-    acc[family].push(font);
-    return acc;
-  }, {});
+    fontsByFamily[font.family].push(font);
+  });
+  
+  return fontsByFamily;
 }
 
 module.exports = {

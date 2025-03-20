@@ -1,4 +1,10 @@
+/**
+ * Favorites module
+ * Provides functions to manage favorite fonts
+ */
+
 const fs = require('fs');
+const path = require('path');
 
 /**
  * Get all favorite fonts
@@ -8,28 +14,24 @@ const fs = require('fs');
 async function getFavorites(favoritesPath) {
   return new Promise((resolve, reject) => {
     try {
+      // Create favorites file if it doesn't exist
       if (!fs.existsSync(favoritesPath)) {
-        fs.writeFileSync(favoritesPath, JSON.stringify([]));
-        resolve([]);
-        return;
-      }
-      
-      fs.readFile(favoritesPath, 'utf8', (err, data) => {
-        if (err) {
-          reject(err);
-          return;
+        const dir = path.dirname(favoritesPath);
+        
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
         }
         
-        try {
-          const favorites = JSON.parse(data);
-          resolve(favorites);
-        } catch (parseError) {
-          console.error('Error parsing favorites:', parseError);
-          resolve([]);
-        }
-      });
+        fs.writeFileSync(favoritesPath, JSON.stringify([]));
+      }
+      
+      // Read favorites
+      const favorites = JSON.parse(fs.readFileSync(favoritesPath, 'utf8'));
+      
+      resolve(favorites);
     } catch (error) {
-      reject(error);
+      console.error('Error getting favorites:', error);
+      resolve([]);
     }
   });
 }
@@ -43,31 +45,22 @@ async function getFavorites(favoritesPath) {
 async function toggleFavorite(favoritesPath, fontData) {
   return new Promise((resolve, reject) => {
     try {
-      if (!fontData) {
-        reject(new Error('Font data is required'));
-        return;
-      }
-      
-      // Ensure favorites file exists
+      // Create favorites file if it doesn't exist
       if (!fs.existsSync(favoritesPath)) {
+        const dir = path.dirname(favoritesPath);
+        
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        
         fs.writeFileSync(favoritesPath, JSON.stringify([]));
       }
       
       // Read favorites
-      const favoritesData = fs.readFileSync(favoritesPath, 'utf8');
-      let favorites = [];
-      
-      try {
-        favorites = JSON.parse(favoritesData);
-      } catch (parseError) {
-        console.error('Error parsing favorites, resetting:', parseError);
-      }
+      const favorites = JSON.parse(fs.readFileSync(favoritesPath, 'utf8'));
       
       // Check if font is already a favorite
-      const existingIndex = favorites.findIndex(font => 
-        font.id === fontData.id || 
-        (font.family === fontData.family && font.style === fontData.style)
-      );
+      const existingIndex = favorites.findIndex(font => font.id === fontData.id);
       
       if (existingIndex >= 0) {
         // Remove from favorites
@@ -75,15 +68,19 @@ async function toggleFavorite(favoritesPath, fontData) {
         fontData.favorite = false;
       } else {
         // Add to favorites
+        favorites.push({
+          ...fontData,
+          favorite: true
+        });
         fontData.favorite = true;
-        favorites.push(fontData);
       }
       
-      // Save updated favorites
-      fs.writeFileSync(favoritesPath, JSON.stringify(favorites));
+      // Save favorites
+      fs.writeFileSync(favoritesPath, JSON.stringify(favorites, null, 2));
       
       resolve(fontData);
     } catch (error) {
+      console.error('Error toggling favorite:', error);
       reject(error);
     }
   });

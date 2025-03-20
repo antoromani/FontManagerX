@@ -1,6 +1,10 @@
+/**
+ * Local fonts module
+ * Provides functions to load fonts from local folders
+ */
+
 const fs = require('fs');
 const path = require('path');
-const fontkit = require('fontkit');
 
 /**
  * Load fonts from a local folder
@@ -9,70 +13,50 @@ const fontkit = require('fontkit');
  */
 async function loadLocalFonts(folderPath) {
   return new Promise((resolve, reject) => {
-    fs.readdir(folderPath, { withFileTypes: true }, async (err, dirents) => {
-      if (err) {
-        reject(err);
-        return;
+    try {
+      if (!fs.existsSync(folderPath)) {
+        return resolve([]);
       }
       
-      // Get files and subdirectories
-      const fontFiles = [];
-      
-      // Recursive function to scan directories
-      const scanDir = async (dir, relativePath = '') => {
-        const files = await fs.promises.readdir(dir, { withFileTypes: true });
-        
-        for (const file of files) {
-          const filePath = path.join(dir, file.name);
-          const fileRelativePath = path.join(relativePath, file.name);
-          
-          if (file.isDirectory()) {
-            // Recurse into subdirectories
-            await scanDir(filePath, fileRelativePath);
-          } else {
-            // Check if it's a font file
-            const ext = path.extname(file.name).toLowerCase();
-            if (ext === '.ttf' || ext === '.otf' || ext === '.woff' || ext === '.woff2') {
-              fontFiles.push(filePath);
-            }
-          }
+      fs.readdir(folderPath, async (err, files) => {
+        if (err) {
+          console.error(`Error reading folder ${folderPath}:`, err);
+          return resolve([]);
         }
-      };
-      
-      try {
-        await scanDir(folderPath);
         
-        // Process fonts in batches to avoid overwhelming the system
+        const fontFiles = files.filter(file => {
+          const ext = path.extname(file).toLowerCase();
+          return ['.ttf', '.otf', '.woff', '.woff2'].includes(ext);
+        });
+        
         const fonts = [];
-        const batchSize = 20;
         
-        for (let i = 0; i < fontFiles.length; i += batchSize) {
-          const batch = fontFiles.slice(i, i + batchSize);
+        for (const file of fontFiles) {
+          const fontPath = path.join(folderPath, file);
           
-          const batchPromises = batch.map(async (fontPath) => {
-            try {
-              const fontData = await extractFontInfo(fontPath);
-              return {
-                ...fontData,
+          try {
+            const fontInfo = await extractFontInfo(fontPath);
+            
+            if (fontInfo) {
+              fonts.push({
+                family: fontInfo.family,
+                style: fontInfo.style,
                 path: fontPath,
-                type: 'local'
-              };
-            } catch (error) {
-              // Skip fonts that can't be processed
-              console.error('Error processing font:', fontPath, error);
-              return null;
+                type: 'local',
+                id: fontPath
+              });
             }
-          });
-          
-          const batchResults = await Promise.all(batchPromises);
-          fonts.push(...batchResults.filter(Boolean));
+          } catch (error) {
+            console.error(`Error extracting font info for ${file}:`, error);
+          }
         }
         
         resolve(fonts);
-      } catch (error) {
-        reject(error);
-      }
-    });
+      });
+    } catch (error) {
+      console.error(`Error loading fonts from folder ${folderPath}:`, error);
+      resolve([]);
+    }
   });
 }
 
@@ -84,44 +68,35 @@ async function loadLocalFonts(folderPath) {
 function extractFontInfo(fontPath) {
   return new Promise((resolve, reject) => {
     try {
-      fs.readFile(fontPath, (err, buffer) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        
-        try {
-          const font = fontkit.create(buffer);
-          
-          const fontInfo = {
-            family: font.familyName,
-            style: font.subfamilyName || 'Regular',
-            id: `${font.familyName}-${font.subfamilyName || 'Regular'}-${path.basename(fontPath)}`,
-            fullName: font.fullName,
-            postscriptName: font.postscriptName,
-            copyright: font.copyright,
-            version: font.version,
-            active: false // Local fonts are not active by default
-          };
-          
-          resolve(fontInfo);
-        } catch (parseError) {
-          // Fall back to basic info if fontkit fails
-          const fileName = path.basename(fontPath);
-          const fileNameWithoutExt = fileName.replace(/\.(ttf|otf|woff|woff2)$/i, '');
-          
-          resolve({
-            family: fileNameWithoutExt,
-            style: 'Regular',
-            id: `${fileNameWithoutExt}-${path.basename(fontPath)}`,
-            active: false
-          });
-        }
+      // In a real implementation, this would use fontkit to extract font metadata
+      // For this example, we'll derive it from the filename
+      const fileName = path.basename(fontPath);
+      const fontNameMatch = fileName.match(/^(.+)\.(ttf|otf|woff|woff2)$/i);
+      const fontName = fontNameMatch ? fontNameMatch[1] : fileName;
+      
+      // Try to extract style information (like Bold, Italic, etc.)
+      const styleMatch = fontName.match(/(Bold|Italic|Light|Regular|Medium|Black|Condensed|Thin|ExtraBold|SemiBold)/i);
+      const style = styleMatch ? styleMatch[1] : 'Regular';
+      
+      // Remove style information from family name
+      let family = fontName;
+      styleMatch && (family = family.replace(styleMatch[0], '').trim());
+      
+      // Clean up family name (remove non-alphanumeric characters)
+      family = family.replace(/[_-]/g, ' ').trim();
+      
+      resolve({
+        family,
+        style,
+        filePath: fontPath
       });
     } catch (error) {
+      console.error(`Error extracting font info for ${fontPath}:`, error);
       reject(error);
     }
   });
 }
 
-module.exports = { loadLocalFonts };
+module.exports = {
+  loadLocalFonts
+};

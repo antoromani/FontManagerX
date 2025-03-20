@@ -1,188 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Font Manager</title>
-  <link rel="stylesheet" href="styles.css">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fonter - Font Manager</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-container">
-    <!-- Left column - Navigation and search -->
-    <div class="left-column">
-      <div class="search-container">
-        <input type="text" id="search-input" placeholder="Search fonts...">
-        <button id="search-btn">
-          <svg class="feather-icon">
-            <use href="assets/feather-icons.svg#search"/>
-          </svg>
-        </button>
-      </div>
-      
-      <nav class="menu">
-        <h2>Font Sources</h2>
-        <ul class="menu-list">
-          <li class="menu-item active" data-category="system">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#monitor"/>
-            </svg>
-            <span>System</span>
-          </li>
-          <li class="menu-item" data-category="folders">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#folder"/>
-            </svg>
-            <span>Folders</span>
-          </li>
-          <li class="menu-item" data-category="online">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#globe"/>
-            </svg>
-            <span>Online</span>
-          </li>
-          <li class="menu-item" data-category="collections">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#grid"/>
-            </svg>
-            <span>Collections</span>
-          </li>
-          <li class="menu-item" data-category="active">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#check-circle"/>
-            </svg>
-            <span>Active</span>
-          </li>
-          <li class="menu-item" data-category="favorites">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#heart"/>
-            </svg>
-            <span>Favorites</span>
-          </li>
-        </ul>
-      </nav>
-      
-      <!-- Folder Selection (hidden initially) -->
-      <div id="folders-container" class="folders-container hidden">
-        <div class="folder-actions">
-          <button id="add-folder-btn" class="btn">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#plus"/>
-            </svg>
-            Add Folder
-          </button>
-        </div>
-        <ul id="folder-list" class="folder-list"></ul>
-      </div>
-      
-      <!-- Collections Management (hidden initially) -->
-      <div id="collections-container" class="collections-container hidden">
-        <div class="collection-actions">
-          <button id="create-collection-btn" class="btn">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#plus"/>
-            </svg>
-            New Collection
-          </button>
-        </div>
-        <ul id="collections-list" class="collections-list"></ul>
-      </div>
-      
-      <!-- Status bar -->
-      <div class="status-bar">
-        <span id="font-count">0 fonts</span>
-      </div>
+    <div class="app-container">
+        <!-- Sidebar / Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>Fonter</h1>
+            </div>
+            
+            <!-- Search input -->
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="Search fonts...">
+                <button id="search-btn">
+                    <svg class="feather-icon">
+                        <use href="assets/feather-icons.svg#search"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Main menu -->
+            <nav class="main-menu">
+                <ul>
+                    <li class="menu-item active" data-category="system">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#monitor"/>
+                        </svg>
+                        <span>System Fonts</span>
+                    </li>
+                    <li class="menu-item" data-category="folders">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#folder"/>
+                        </svg>
+                        <span>Local Folders</span>
+                    </li>
+                    <li class="menu-item" data-category="online">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#globe"/>
+                        </svg>
+                        <span>Google Fonts</span>
+                    </li>
+                    <li class="menu-item" data-category="collections">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#grid"/>
+                        </svg>
+                        <span>Collections</span>
+                    </li>
+                    <li class="menu-item" data-category="active">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#check-circle"/>
+                        </svg>
+                        <span>Active Fonts</span>
+                    </li>
+                    <li class="menu-item" data-category="favorites">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#heart"/>
+                        </svg>
+                        <span>Favorites</span>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- Folders container -->
+            <div id="folders-container" class="submenu-container hidden">
+                <div class="submenu-header">
+                    <h3>Local Folders</h3>
+                    <button id="add-folder-btn" class="action-btn">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#plus"/>
+                        </svg>
+                    </button>
+                </div>
+                <ul id="folder-list" class="submenu-list"></ul>
+            </div>
+            
+            <!-- Collections container -->
+            <div id="collections-container" class="submenu-container hidden">
+                <div class="submenu-header">
+                    <h3>Collections</h3>
+                    <button id="create-collection-btn" class="action-btn">
+                        <svg class="feather-icon">
+                            <use href="assets/feather-icons.svg#plus"/>
+                        </svg>
+                    </button>
+                </div>
+                <ul id="collections-list" class="submenu-list"></ul>
+            </div>
+        </aside>
+        
+        <!-- Main content area -->
+        <main class="content">
+            <!-- Font display options -->
+            <div class="font-options">
+                <div class="sample-text-container">
+                    <label for="sample-text">Sample Text:</label>
+                    <input type="text" id="sample-text" value="The quick brown fox jumps over the lazy dog">
+                </div>
+                <div class="font-size-container">
+                    <label for="font-size">Size:</label>
+                    <input type="range" id="font-size" min="8" max="72" value="24">
+                    <span id="font-size-value">24px</span>
+                </div>
+            </div>
+            
+            <!-- Font list container -->
+            <div id="font-list-container">
+                <div class="font-list-header">
+                    <h2>System Fonts</h2>
+                    <span id="font-count">0 fonts</span>
+                </div>
+                
+                <!-- Loading indicator -->
+                <div id="loading-indicator" class="hidden">
+                    <div class="spinner"></div>
+                    <p>Loading fonts...</p>
+                </div>
+                
+                <!-- Empty state -->
+                <div id="empty-state" class="hidden">
+                    <svg class="feather-icon large">
+                        <use href="assets/feather-icons.svg#alert-circle"/>
+                    </svg>
+                    <p>No fonts found</p>
+                </div>
+                
+                <!-- Font list -->
+                <div id="font-list"></div>
+            </div>
+        </main>
     </div>
     
-    <!-- Right column - Font previews -->
-    <div class="right-column">
-      <div class="customization-bar">
-        <div class="sample-text-control">
-          <label for="sample-text">Sample Text:</label>
-          <input type="text" id="sample-text" value="The quick brown fox jumps over the lazy dog">
+    <!-- Create collection modal -->
+    <div id="create-collection-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Collection</h3>
+                <button class="close-btn">
+                    <svg class="feather-icon">
+                        <use href="assets/feather-icons.svg#x"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="collection-name">Collection Name:</label>
+                    <input type="text" id="collection-name" placeholder="My Collection">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-collection-btn" class="btn-secondary">Cancel</button>
+                <button id="save-collection-btn" class="btn-primary">Create</button>
+            </div>
         </div>
-        <div class="font-size-control">
-          <label for="font-size">Size:</label>
-          <input type="range" id="font-size" min="8" max="72" value="24">
-          <span id="font-size-value">24px</span>
-        </div>
-      </div>
-      
-      <div id="font-list-container" class="font-list-container">
-        <div id="font-list" class="font-list"></div>
-        <div id="loading-indicator" class="loading-indicator hidden">
-          <svg class="feather-icon spinning">
-            <use href="assets/feather-icons.svg#loader"/>
-          </svg>
-          <span>Loading fonts...</span>
-        </div>
-        <div id="empty-state" class="empty-state hidden">
-          <svg class="feather-icon">
-            <use href="assets/feather-icons.svg#alert-circle"/>
-          </svg>
-          <span>No fonts found</span>
-        </div>
-      </div>
     </div>
-  </div>
-  
-  <!-- Modals -->
-  <div id="create-collection-modal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Create New Collection</h2>
-        <button class="close-btn">
-          <svg class="feather-icon">
-            <use href="assets/feather-icons.svg#x"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <label for="collection-name">Collection Name:</label>
-        <input type="text" id="collection-name" placeholder="My Collection">
-      </div>
-      <div class="modal-footer">
-        <button id="cancel-collection-btn" class="btn cancel">Cancel</button>
-        <button id="save-collection-btn" class="btn primary">Create</button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Templates (hidden) -->
-  <template id="font-item-template">
-    <div class="font-item">
-      <div class="font-item-header">
-        <div class="font-info">
-          <h3 class="font-name"></h3>
-          <span class="font-style"></span>
+    
+    <!-- Font item template -->
+    <template id="font-item-template">
+        <div class="font-item">
+            <div class="font-info">
+                <h3 class="font-name"></h3>
+                <span class="font-style"></span>
+            </div>
+            <div class="font-sample"></div>
+            <div class="font-actions">
+                <button class="action-btn toggle-activate-btn" title="Activate/Deactivate Font">
+                    <svg class="feather-icon">
+                        <use href="assets/feather-icons.svg#toggle-left"/>
+                    </svg>
+                </button>
+                <button class="action-btn toggle-favorite-btn" title="Add to Favorites">
+                    <svg class="feather-icon">
+                        <use href="assets/feather-icons.svg#heart"/>
+                    </svg>
+                </button>
+                <button class="action-btn open-location-btn" title="Open Font Location">
+                    <svg class="feather-icon">
+                        <use href="assets/feather-icons.svg#folder"/>
+                    </svg>
+                </button>
+                <button class="action-btn add-to-collection-btn" title="Add to Collection">
+                    <svg class="feather-icon">
+                        <use href="assets/feather-icons.svg#plus-square"/>
+                    </svg>
+                </button>
+            </div>
         </div>
-        <div class="font-actions">
-          <button class="toggle-activate-btn">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#toggle-right"/>
-            </svg>
-          </button>
-          <button class="toggle-favorite-btn">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#heart"/>
-            </svg>
-          </button>
-          <button class="open-location-btn">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#folder"/>
-            </svg>
-          </button>
-          <button class="add-to-collection-btn">
-            <svg class="feather-icon">
-              <use href="assets/feather-icons.svg#plus-square"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="font-sample"></div>
-    </div>
-  </template>
-  
-  <script src="renderer.js"></script>
+    </template>
+    
+    <script src="renderer.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "rust"]
+modules = ["nodejs-20", "rust", "python-3.11"]
 
 [nix]
 channel = "stable-24_05"
@@ -13,10 +13,10 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Font Manager Application"
+args = "Font Manager Web App"
 
 [[workflows.workflow]]
-name = "Font Manager Application"
+name = "Font Manager Web App"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -27,8 +27,12 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm install && npm install electron fontkit && npx electron ."
+args = "node server.js"
 waitForPort = 5000
 
 [deployment]
 run = ["sh", "-c", "npm install && npm install electron fontkit && npx electron ."]
+
+[[ports]]
+localPort = 5000
+externalPort = 80
