@@ -9,31 +9,41 @@ const path = require('path');
 /**
  * Get all favorite fonts
  * @param {string} favoritesPath - Path to favorites file
- * @returns {Promise<Array>} - Array of favorite font objects
+ * @returns {Array} - Array of favorite font objects
  */
-async function getFavorites(favoritesPath) {
-  return new Promise((resolve, reject) => {
-    try {
-      // Create favorites file if it doesn't exist
-      if (!fs.existsSync(favoritesPath)) {
-        const dir = path.dirname(favoritesPath);
-        
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        
-        fs.writeFileSync(favoritesPath, JSON.stringify([]));
+function getFavorites(favoritesPath) {
+  try {
+    // Create favorites file if it doesn't exist
+    if (!fs.existsSync(favoritesPath)) {
+      const dir = path.dirname(favoritesPath);
+      
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
       }
       
-      // Read favorites
-      const favorites = JSON.parse(fs.readFileSync(favoritesPath, 'utf8'));
-      
-      resolve(favorites);
-    } catch (error) {
-      console.error('Error getting favorites:', error);
-      resolve([]);
+      fs.writeFileSync(favoritesPath, JSON.stringify([]));
     }
-  });
+    
+    // Read favorites
+    const favorites = JSON.parse(fs.readFileSync(favoritesPath, 'utf8'));
+    
+    // If no favorites, create sample favorites
+    if (favorites.length === 0) {
+      const sampleFavorites = [
+        { family: 'Roboto', style: 'Regular', type: 'google', id: 'google-roboto-regular', favorite: true },
+        { family: 'Montserrat', style: 'Bold', type: 'google', id: 'google-montserrat-700', favorite: true },
+        { family: 'Open Sans', style: 'Light', type: 'google', id: 'google-open-sans-300', favorite: true }
+      ];
+      
+      fs.writeFileSync(favoritesPath, JSON.stringify(sampleFavorites, null, 2));
+      return sampleFavorites;
+    }
+    
+    return favorites;
+  } catch (error) {
+    console.error('Error getting favorites:', error);
+    return [];
+  }
 }
 
 /**

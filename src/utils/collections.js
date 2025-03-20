@@ -9,44 +9,52 @@ const path = require('path');
 /**
  * Get all collections
  * @param {string} collectionsPath - Path to collections directory
- * @returns {Promise<Array>} - Array of collection objects
+ * @returns {Array} - Array of collection objects
  */
-async function getCollections(collectionsPath) {
-  return new Promise((resolve, reject) => {
-    try {
-      // Create collections directory if it doesn't exist
-      if (!fs.existsSync(collectionsPath)) {
-        fs.mkdirSync(collectionsPath, { recursive: true });
-      }
-      
-      fs.readdir(collectionsPath, (err, files) => {
-        if (err) {
-          console.error('Error reading collections directory:', err);
-          return resolve([]);
-        }
-        
-        // Filter for JSON files (collections)
-        const collectionFiles = files.filter(file => path.extname(file).toLowerCase() === '.json');
-        
-        const collections = [];
-        
-        collectionFiles.forEach(file => {
-          try {
-            const collectionPath = path.join(collectionsPath, file);
-            const collection = JSON.parse(fs.readFileSync(collectionPath, 'utf8'));
-            collections.push(collection);
-          } catch (error) {
-            console.error(`Error reading collection file ${file}:`, error);
-          }
-        });
-        
-        resolve(collections);
-      });
-    } catch (error) {
-      console.error('Error getting collections:', error);
-      resolve([]);
+function getCollections(collectionsPath) {
+  try {
+    // Create collections directory if it doesn't exist
+    if (!fs.existsSync(collectionsPath)) {
+      fs.mkdirSync(collectionsPath, { recursive: true });
     }
-  });
+    
+    const files = fs.readdirSync(collectionsPath);
+    
+    // Filter for JSON files (collections)
+    const collectionFiles = files.filter(file => path.extname(file).toLowerCase() === '.json');
+    
+    const collections = [];
+    
+    collectionFiles.forEach(file => {
+      try {
+        const collectionPath = path.join(collectionsPath, file);
+        const collection = JSON.parse(fs.readFileSync(collectionPath, 'utf8'));
+        collections.push(collection);
+      } catch (error) {
+        console.error(`Error reading collection file ${file}:`, error);
+      }
+    });
+    
+    // If no collections exist in demo mode, create some samples
+    if (collections.length === 0) {
+      const sampleCollections = [
+        { name: 'Project A', createdAt: new Date().toISOString(), fonts: [] },
+        { name: 'Portfolio', createdAt: new Date().toISOString(), fonts: [] },
+        { name: 'Client Branding', createdAt: new Date().toISOString(), fonts: [] }
+      ];
+      
+      sampleCollections.forEach(collection => {
+        const collectionPath = path.join(collectionsPath, `${collection.name.replace(/[^\w\s]/g, '').replace(/\s+/g, '-').toLowerCase()}.json`);
+        fs.writeFileSync(collectionPath, JSON.stringify(collection, null, 2));
+        collections.push(collection);
+      });
+    }
+    
+    return collections;
+  } catch (error) {
+    console.error('Error getting collections:', error);
+    return [];
+  }
 }
 
 /**
