@@ -310,17 +310,7 @@ app.get('/api/favorites', (req, res) => {
     const userDataDir = app.get('userData') || path.join(process.env.HOME || process.env.USERPROFILE, '.fonter');
     const favoritesPath = path.join(userDataDir, 'favorites.json');
     
-    // Create file if it doesn't exist
-    if (!fs.existsSync(favoritesPath)) {
-      // Create directory if it doesn't exist
-      if (!fs.existsSync(userDataDir)) {
-        fs.mkdirSync(userDataDir, { recursive: true });
-      }
-      
-      // Create empty file
-      fs.writeFileSync(favoritesPath, JSON.stringify([]));
-    }
-    
+    // Get favorites (function now handles creating the file if needed)
     const favorites = getFavorites(favoritesPath);
     res.json(favorites);
   } catch (error) {
