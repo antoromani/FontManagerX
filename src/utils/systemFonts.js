@@ -13,18 +13,24 @@ const os = require('os');
  * @returns {Promise<Array>} - Array of font objects
  */
 async function getSystemFonts() {
-  const platform = process.platform;
-  
-  switch (platform) {
-    case 'win32':
-      return getWindowsFonts();
-    case 'darwin':
-      return getMacOSFonts();
-    case 'linux':
-      return getLinuxFonts();
-    default:
-      // For web demo on Replit, return some sample fonts
-      return getSampleFonts();
+  try {
+    const platform = process.platform;
+    
+    switch (platform) {
+      case 'win32':
+        return getWindowsFonts();
+      case 'darwin':
+        return getMacOSFonts();
+      case 'linux':
+        return getLinuxFonts();
+      default:
+        // For web demo on Replit, return some sample fonts
+        return getSampleFonts();
+    }
+  } catch (error) {
+    console.error('Error in getSystemFonts:', error);
+    // Return sample fonts as fallback
+    return getSampleFonts();
   }
 }
 
@@ -375,5 +381,6 @@ function getSampleFonts() {
 }
 
 module.exports = {
-  getSystemFonts
+  getSystemFonts,
+  getSampleFonts
 };

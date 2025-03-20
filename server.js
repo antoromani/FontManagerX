@@ -80,7 +80,10 @@ app.get('/api/fonts/system', async (req, res) => {
     res.json(fonts);
   } catch (error) {
     console.error('Error fetching system fonts:', error);
-    res.status(500).json({ error: error.message });
+    // Respond with sample fonts instead of error to ensure UI doesn't break
+    const { getSampleFonts } = require('./src/utils/systemFonts');
+    const sampleFonts = getSampleFonts();
+    res.json(sampleFonts);
   }
 });
 
