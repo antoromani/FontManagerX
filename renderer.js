@@ -189,7 +189,16 @@ function switchCategory(category) {
   
   // Set title in font list header
   const fontListHeader = fontListContainer.querySelector('.font-list-header h2');
-  fontListHeader.textContent = menuItems.find(item => item.dataset.category === category).querySelector('span').textContent;
+  
+  // Find the active menu item (menuItems is a NodeList, not an array)
+  let activeMenuText = '';
+  for (let i = 0; i < menuItems.length; i++) {
+    if (menuItems[i].dataset.category === category) {
+      activeMenuText = menuItems[i].querySelector('span').textContent;
+      break;
+    }
+  }
+  fontListHeader.textContent = activeMenuText;
   
   // Handle specific category actions
   currentCategory = category;
