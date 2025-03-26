@@ -1,0 +1,31 @@
+# Ignorar node_modules/ (dependencias de Node.js)
+node_modules/
+
+# Ignorar archivos de entorno y sensibles
+.env
+*.env
+
+# Ignorar logs y archivos temporales
+*.log
+*.tmp
+*.temp
+
+# Ignorar archivos generados por el sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar carpetas de IDE/Editores
+.vscode/
+.idea/
+
+# Ignorar archivos de Electron (caché y binarios)
+dist/
+release-builds/
+*.exe
+*.dll
+*.bin
+
+# Ignorar archivos de Python (si usas entornos virtuales)
+__pycache__/
+*.pyc
+venv/

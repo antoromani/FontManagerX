@@ -50,6 +50,8 @@ function createWindow() {
     icon: path.join(__dirname, 'assets/app-icon.png')
   });
 
+  mainWindow.webContents.openDevTools();
+
   mainWindow.loadFile('index.html');
   
   // Uncomment for development debugging
